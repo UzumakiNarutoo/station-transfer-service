@@ -17,7 +17,9 @@ A microservice that ingests station transfer events and exposes per-station reco
 ### Local
 
 - Python 3.12+
-- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+- `make` (pre-installed on macOS/Linux)
+
+> **Note:** [uv](https://docs.astral.sh/uv/getting-started/installation/) is used for dependency management but will be **auto-installed** by `make` if not present.
 
 ### Docker
 
@@ -28,25 +30,35 @@ A microservice that ingests station transfer events and exposes per-station reco
 
 ### Local
 
+All `make` commands automatically install `uv` (if missing) and sync dependencies before running.
+
 ```bash
-# Install dependencies
+# Install uv + dependencies only
 make install
 
-# Run the server (http://localhost:8000)
+# Start the server (http://localhost:8000)
 make run
 
 # Run tests
 make test
+
+# Clean up generated files
+make clean
 ```
 
 ### Docker
 
+No local setup required — everything runs inside containers.
+
 ```bash
-# Build and run
+# Build and start the server
 docker compose up --build
 
-# Run tests
-docker compose run --rm app test
+# Run tests in a container
+docker compose run --rm test
+
+# Stop and remove containers
+docker compose down
 ```
 
 ## API Reference

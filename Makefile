@@ -1,13 +1,16 @@
-.PHONY: install run test clean
+.PHONY: install run test clean setup
 
-install:
+setup:
+	@command -v uv >/dev/null 2>&1 || { echo "Installing uv..."; curl -LsSf https://astral.sh/uv/install.sh | sh; }
 	uv sync --all-extras
 
-run:
+install: setup
+
+run: setup
 	uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-test:
+test: setup
 	uv run pytest -v
 
 clean:
-	rm -rf data/ .pytest_cache __pycache__
+	rm -rf data/ .pytest_cache __pycache__ .venv

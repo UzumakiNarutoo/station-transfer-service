@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
@@ -16,6 +17,11 @@ class Base(DeclarativeBase):
 async def init_db() -> None:
     """Create tables and enable WAL mode for SQLite."""
     from app.models.db import TransferEvent  # noqa: F401
+
+    # Ensure the database directory exists for file-based SQLite
+    if "sqlite" in DATABASE_URL and "///" in DATABASE_URL:
+        db_path = DATABASE_URL.split("///")[-1]
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

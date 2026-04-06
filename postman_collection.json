@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "Station Transfer Service",
+    "description": "API collection for the Station Transfer Service — ingests transfer events and provides per-station reconciliation summaries.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Transfers",
+      "item": [
+        {
+          "name": "Ingest batch of events",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transfers",
+              "host": ["{{base_url}}"],
+              "path": ["transfers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\n    {\n      \"event_id\": \"E1\",\n      \"station_id\": \"S1\",\n      \"amount\": 100.50,\n      \"status\": \"approved\",\n      \"created_at\": \"2026-02-19T10:00:00Z\"\n    },\n    {\n      \"event_id\": \"E2\",\n      \"station_id\": \"S1\",\n      \"amount\": 200.00,\n      \"status\": \"pending\",\n      \"created_at\": \"2026-02-19T11:00:00Z\"\n    }\n  ]\n}"
+            }
+          },
+          "response": [
+            {
+              "name": "Successful insert",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"inserted\": 2,\n  \"duplicates\": 0,\n  \"errors\": []\n}"
+            },
+            {
+              "name": "Duplicate events",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"inserted\": 0,\n  \"duplicates\": 2,\n  \"errors\": []\n}"
+            },
+            {
+              "name": "Partial accept with validation errors",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"inserted\": 1,\n  \"duplicates\": 0,\n  \"errors\": [\n    {\n      \"event_id\": \"E3\",\n      \"error\": \"amount must be a non-negative number\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Ingest with validation errors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transfers",
+              "host": ["{{base_url}}"],
+              "path": ["transfers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\n    {\n      \"event_id\": \"E10\",\n      \"station_id\": \"S1\",\n      \"amount\": -5.00,\n      \"status\": \"approved\",\n      \"created_at\": \"2026-02-19T10:00:00Z\"\n    },\n    {\n      \"event_id\": \"E11\",\n      \"station_id\": \"S1\",\n      \"amount\": 50.00,\n      \"status\": \"approved\",\n      \"created_at\": \"not-a-date\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Ingest empty batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/transfers",
+              "host": ["{{base_url}}"],
+              "path": ["transfers"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": []\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stations",
+      "item": [
+        {
+          "name": "Get station summary",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/stations/S1/summary",
+              "host": ["{{base_url}}"],
+              "path": ["stations", "S1", "summary"]
+            }
+          },
+          "response": [
+            {
+              "name": "Station found",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"station_id\": \"S1\",\n  \"total_approved_amount\": 100.50,\n  \"events_count\": 2\n}"
+            }
+          ]
+        },
+        {
+          "name": "Station not found",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/stations/UNKNOWN/summary",
+              "host": ["{{base_url}}"],
+              "path": ["stations", "UNKNOWN", "summary"]
+            }
+          },
+          "response": [
+            {
+              "name": "Not found",
+              "status": "Not Found",
+              "code": 404,
+              "body": "{\n  \"detail\": \"No events found for station 'UNKNOWN'\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

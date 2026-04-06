@@ -218,6 +218,6 @@ station-transfer-service/
 ├── docker-compose.yml
 ├── Makefile
 ├── pyproject.toml
-├── openapi.json
+├── postman_collection.json   # Postman collection (importable)
 └── README.md
 ```

@@ -155,14 +155,14 @@ curl http://localhost:8000/stations/S1/summary
 
 ### Idempotency Strategy
 
-Every event has a globally unique `event_id`. The database enforces a **unique constraint** on `event_id`. When a batch is ingested, each event is inserted individually within a transaction. If an `IntegrityError` is raised (duplicate `event_id`), the event is silently skipped and counted as a duplicate. The first write wins — subsequent submissions of the same `event_id` are discarded regardless of payload differences.
+Every event has a globally unique `event_id`. The database enforces a **unique constraint** on `event_id`. When a batch is ingested, all events are inserted in a single statement using `INSERT ... ON CONFLICT DO NOTHING`. Duplicates are silently skipped at the database level and counted via `rowcount`. The first write wins — subsequent submissions of the same `event_id` are discarded regardless of payload differences.
 
 ### Concurrency Strategy
 
 Concurrency safety is achieved through **SQLite's unique constraint + transactional inserts**:
 
-- Each event insert is attempted inside a transaction.
-- If two concurrent requests try to insert the same `event_id`, the database's unique constraint guarantees exactly one succeeds. The other receives an `IntegrityError` and counts it as a duplicate.
+- The entire batch is inserted in a single `INSERT ... ON CONFLICT DO NOTHING` statement within a transaction.
+- If two concurrent requests try to insert the same `event_id`, the database's unique constraint guarantees exactly one succeeds. The other silently skips the duplicate.
 - SQLite is configured with **WAL (Write-Ahead Logging)** mode, which allows concurrent readers while a write is in progress.
 
 This approach mirrors how a production PostgreSQL setup would work — the database is the single source of truth for uniqueness, not application-level locking.
